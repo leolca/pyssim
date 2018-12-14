@@ -59,12 +59,7 @@ class SSIMImage(object):
             self.gaussian_kernel_1d = gaussian_kernel_1d
 
             # np.array of ycbcr channels and alpha image
-            self.img_channels, alpha = to_ycbcr(self.img)
-
-            # np.array of grayscale and alpha image
-            #self.img_gray, self.img_alpha = to_grayscale(self.img)
-            #if self.img_alpha is not None:
-            #    self.img_gray[self.img_alpha == 255] = 0
+            self.img_channels, self.img_alpha = to_ycbcr(self.img)
 
             # Squared channels
             self.img_channels_squared = self.img_channels ** 2
