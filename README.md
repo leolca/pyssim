@@ -4,6 +4,10 @@ This module implements the Structural Similarity Image Metric (SSIM).
 Original code written by Antoine Vacavant from
 http://isit.u-clermont1.fr/~anvacava/code.html, with modifications by
 Christopher Godfrey and Jeff Terrace.
+Slight modifications to take in account color, made by Leonardo Araujo.
+(using weights proposed by Wang 2004).
+Wang, Z., Lu, L., Bovik, A.C.: Video quality assessment based on structural distortion measurement. 
+Signal Processing: Image Communication 19(2), 121-132 (2004). DOI 10.1016/s0923-5965(03)00076-6.
 
 [![Build Status](https://travis-ci.org/jterrace/pyssim.svg?branch=master)](https://travis-ci.org/jterrace/pyssim)
 
@@ -58,3 +62,5 @@ To test:
 * [1] Z. Wang, A. C. Bovik, H. R. Sheikh and E. P. Simoncelli. Image quality assessment: From error visibility to structural similarity. IEEE Transactions on Image Processing, 13(4):600--612, 2004. 
 * [2] Z. Wang and A. C. Bovik. Mean squared error: Love it or leave it? - A new look at signal fidelity measures. IEEE Signal Processing Magazine, 26(1):98--117, 2009.
 * [3] Z. Wang and E.P. Simoncelli. Translation Insensitive Image Similarity in Complex Wavelet Domain. Acoustics, Speech, and Signal Processing, 2005. Proceedings. (ICASSP '05). IEEE International Conference on , vol.2, no., pp.573,576, March 18-23, 2005
+* [4] Z. Wang, L. Lu and A.C. Bovik. Video quality assessment based on structural distortion measurement. Signal Processing: Image Communication 19(2), 121--132, 2004. 
+

@@ -6,7 +6,7 @@ import numpy
 from numpy.ma.core import exp
 import scipy.ndimage
 
-from ssim.compat import ImageOps
+from compat import ImageOps
 
 def convolve_gaussian_2d(image, gaussian_kernel_1d):
     """Convolve 2d gaussian."""
@@ -45,3 +45,21 @@ def to_grayscale(img):
         alpha = numpy.asarray(img.split()[-1]).astype(numpy.float)
 
     return gray, alpha
+
+def to_ycbcr(img):
+    """Convert PIL image to numpy Y, Cb and Cr arrays.
+
+    Args:
+      img (PIL.Image): PIL Image object.
+
+    Returns:
+      (YCbCr, alpha): all numpy arrays.
+    """
+    ycbcr = numpy.asarray(img.convert('YCbCr')).astype(numpy.float)
+    
+    imbands = img.getbands()
+    alpha = None
+    if 'A' in imbands:
+        alpha = numpy.asarray(img.split()[-1]).astype(numpy.float)
+
+    return ycbcr, alpha

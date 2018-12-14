@@ -9,24 +9,23 @@ import sys
 import numpy as np
 from scipy import signal
 
-from ssim import compat
-from ssim.compat import Image, ImageOps
-from ssim.utils import convolve_gaussian_2d
-from ssim.utils import get_gaussian_kernel
-from ssim.utils import to_grayscale
-
+import compat
+from compat import Image, ImageOps
+from utils import convolve_gaussian_2d
+from utils import get_gaussian_kernel
+from utils import to_ycbcr
 
 class SSIMImage(object):
     """Wraps a PIL Image object with SSIM state.
 
     Attributes:
       img: Original PIL Image.
-      img_gray: grayscale Image.
-      img_gray_squared: squared img_gray.
-      img_gray_mu: img_gray convolved with gaussian kernel.
-      img_gray_mu_squared: squared img_gray_mu.
-      img_gray_sigma_squared: img_gray convolved with gaussian kernel -
-                              img_gray_mu_squared.
+      img_channels: array of Image channel (grayscale or YCbCr).
+      img_channels_squared: squared img_channels.
+      img_channels_mu: img_channels convolved with gaussian kernel.
+      img_channels_mu_squared: squared img_channels.
+      img_channels_sigma_squared: img_channels convolved with gaussian kernel - 
+                                  img_channels_mu_squared.
     """
     def __init__(self, img, gaussian_kernel_1d=None, size=None):
         """Create an SSIMImage.
@@ -50,44 +49,50 @@ class SSIMImage(object):
         # Set the size of the image
         self.size = self.img.size
 
+        # Set the numeber of channels of the image
+        self.nChannels = len(self.img.getbands())
+
         # If gaussian kernel is defined we create
         # common SSIM objects
         if gaussian_kernel_1d is not None:
 
             self.gaussian_kernel_1d = gaussian_kernel_1d
 
+            # np.array of ycbcr channels and alpha image
+            self.img_channels, alpha = to_ycbcr(self.img)
+
             # np.array of grayscale and alpha image
-            self.img_gray, self.img_alpha = to_grayscale(self.img)
-            if self.img_alpha is not None:
-                self.img_gray[self.img_alpha == 255] = 0
+            #self.img_gray, self.img_alpha = to_grayscale(self.img)
+            #if self.img_alpha is not None:
+            #    self.img_gray[self.img_alpha == 255] = 0
 
-            # Squared grayscale
-            self.img_gray_squared = self.img_gray ** 2
+            # Squared channels
+            self.img_channels_squared = self.img_channels ** 2
 
-            # Convolve grayscale image with gaussian
-            self.img_gray_mu = convolve_gaussian_2d(
-                self.img_gray, self.gaussian_kernel_1d)
+            # Convolve channels image with gaussian
+            self.img_channels_mu = convolve_gaussian_2d(
+                self.img_channels, self.gaussian_kernel_1d)
 
             # Squared mu
-            self.img_gray_mu_squared = self.img_gray_mu ** 2
+            self.img_channels_mu_squared = self.img_channels_mu ** 2
 
-            # Convolve squared grayscale with gaussian
-            self.img_gray_sigma_squared = convolve_gaussian_2d(
-                self.img_gray_squared, self.gaussian_kernel_1d)
+            # Convolve squared channels with gaussian
+            self.img_channels_sigma_squared = convolve_gaussian_2d(
+                self.img_channels_squared, self.gaussian_kernel_1d)
 
             # Substract squared mu
-            self.img_gray_sigma_squared -= self.img_gray_mu_squared
+            self.img_channels_sigma_squared -= self.img_channels_mu_squared
 
         # If we don't define gaussian kernel, we create
         # common CW-SSIM objects
         else:
             # Grayscale PIL.Image
-            self.img_gray = ImageOps.grayscale(self.img)
+            self.img_channels = self.img.convert('YCbCr') 
 
 class SSIM(object):
     """Computes SSIM between two images."""
     def __init__(self, img, gaussian_kernel_1d=None, size=None,
-                 l=255, k_1=0.01, k_2=0.03, k=0.01):
+                 l=255, k_1=0.01, k_2=0.03, k=0.01, wy=0.8, wcb=0.1, wcr=0.1):
         """Create an SSIM object.
 
         Args:
@@ -95,6 +100,7 @@ class SSIM(object):
           l, k_1, k_2 (float): SSIM configuration variables.
           k (float): CW-SSIM configuration variable (default 0.01)
           gaussian_kernel_1d (np.ndarray, optional): Gaussian kernel
+          wy, wcb, wcr (float): color SSIM channel weight parameters (defaut 0.8, 0.1, 0.1)
           that was generated with utils.get_gaussian_kernel is used
           to precompute common objects for SSIM computation
           size (tuple, optional): resize the image to the tuple size
@@ -103,6 +109,7 @@ class SSIM(object):
         # Set k1,k2 & c1,c2 to depend on L (width of color map).
         self.c_1 = (k_1 * l) ** 2
         self.c_2 = (k_2 * l) ** 2
+        self.w = [wy, wcb, wcr]
         self.gaussian_kernel_1d = gaussian_kernel_1d
         self.img = SSIMImage(img, gaussian_kernel_1d, size)
 
@@ -123,10 +130,10 @@ class SSIM(object):
                                 target.gaussian_kernel_1d):
             target = SSIMImage(target, self.gaussian_kernel_1d, self.img.size)
 
-        img_mat_12 = self.img.img_gray * target.img_gray
+        img_mat_12 = self.img.img_channels * target.img_channels
         img_mat_sigma_12 = convolve_gaussian_2d(
             img_mat_12, self.gaussian_kernel_1d)
-        img_mat_mu_12 = self.img.img_gray_mu * target.img_gray_mu
+        img_mat_mu_12 = self.img.img_channels_mu * target.img_channels_mu
         img_mat_sigma_12 = img_mat_sigma_12 - img_mat_mu_12
 
         # Numerator of SSIM
@@ -135,13 +142,14 @@ class SSIM(object):
 
         # Denominator of SSIM
         den_ssim = (
-            (self.img.img_gray_mu_squared + target.img_gray_mu_squared +
+            (self.img.img_channels_mu_squared + target.img_channels_mu_squared +
              self.c_1) *
-            (self.img.img_gray_sigma_squared +
-             target.img_gray_sigma_squared + self.c_2))
+            (self.img.img_channels_sigma_squared +
+             target.img_channels_sigma_squared + self.c_2))
 
         ssim_map = num_ssim / den_ssim
-        index = np.average(ssim_map)
+        indexes = np.average(ssim_map, axis=(0,1))
+        index = np.average(indexes, weights=self.w)
         return index
 
     def cw_ssim_value(self, target, width=30):
@@ -164,8 +172,8 @@ class SSIM(object):
         widths = np.arange(1, width+1)
 
         # Use the image data as arrays
-        sig1 = np.asarray(self.img.img_gray.getdata())
-        sig2 = np.asarray(target.img_gray.getdata())
+        sig1 = np.asarray(self.img.img_channels.getdata())
+        sig2 = np.asarray(target.img_channels.getdata())
 
         # Convolution
         cwtmatr1 = signal.cwt(sig1, signal.ricker, widths)
@@ -187,7 +195,8 @@ class SSIM(object):
         ssim_map = (num_ssim_1 / den_ssim_1) * (num_ssim_2 / den_ssim_2)
 
         # Average the per pixel results
-        index = np.average(ssim_map)
+        indexes = np.average(ssim_map, axis=(0,1))
+        index = np.average(indexes, weights=self.w) 
         return index
 
 def main():
