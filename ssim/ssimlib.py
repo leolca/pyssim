@@ -9,11 +9,11 @@ import sys
 import numpy as np
 from scipy import signal
 
-import compat
-from compat import Image, ImageOps
-from utils import convolve_gaussian_2d
-from utils import get_gaussian_kernel
-from utils import to_ycbcr
+from ssim import compat
+from ssim.compat import Image, ImageOps
+from ssim.utils import convolve_gaussian_2d
+from ssim.utils import get_gaussian_kernel
+from ssim.utils import to_ycbcr
 
 class SSIMImage(object):
     """Wraps a PIL Image object with SSIM state.

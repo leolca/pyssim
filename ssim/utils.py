@@ -6,7 +6,7 @@ import numpy
 from numpy.ma.core import exp
 import scipy.ndimage
 
-from compat import ImageOps
+from ssim.compat import ImageOps
 
 def convolve_gaussian_2d(image, gaussian_kernel_1d):
     """Convolve 2d gaussian."""
