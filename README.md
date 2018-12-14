@@ -4,10 +4,8 @@ This module implements the Structural Similarity Image Metric (SSIM).
 Original code written by Antoine Vacavant from
 http://isit.u-clermont1.fr/~anvacava/code.html, with modifications by
 Christopher Godfrey and Jeff Terrace.
-Slight modifications to take in account color, made by Leonardo Araujo.
+Slight modifications to take in account color, made by Leonardo Araujo 
 (using weights proposed by Wang 2004).
-Wang, Z., Lu, L., Bovik, A.C.: Video quality assessment based on structural distortion measurement. 
-Signal Processing: Image Communication 19(2), 121-132 (2004). DOI 10.1016/s0923-5965(03)00076-6.
 
 [![Build Status](https://travis-ci.org/jterrace/pyssim.svg?branch=master)](https://travis-ci.org/jterrace/pyssim)
 
