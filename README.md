@@ -11,7 +11,7 @@ Slight modifications to take in account color, made by Leonardo Araujo
 
 ## Installation
 
-    pip install pyssim
+    pip install git+git://github.com/leolca/pyssim.git
 
 ## Running
 
